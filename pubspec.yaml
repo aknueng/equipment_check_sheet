@@ -43,6 +43,8 @@ dependencies:
   form_field_validator: ^1.1.0
   font_awesome_flutter: ^10.5.0
   intl: ^0.18.1
+  get: ^4.6.6
+  never_behind_keyboard: ^1.0.2
 
 dev_dependencies:
   flutter_test:
@@ -58,6 +60,11 @@ dev_dependencies:
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/checklist_icon.png"
+
 # The following section is specific to Flutter packages.
 flutter:
 
@@ -67,7 +74,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
+  assets:
+    - assets/images/dci_logo.png
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

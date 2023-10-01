@@ -21,7 +21,7 @@ class MEquipInfo {
     required this.lastCheck,
   });
 
-  factory MEquipInfo.fromJson(Map<String, dynamic> json) {
+  factory MEquipInfo.fromJson(Map<String, String> json) {
     return MEquipInfo(
         code: json['code'].toString(),
         title: json['title'].toString(),
@@ -34,7 +34,7 @@ class MEquipInfo {
         lastCheck: json['lastCheck'].toString());
   }
 
-  Map<String, dynamic> toJson() => {
+  Map<String, String> toJson() => {
         'code': code,
         'title': title,
         'subTitle': subTitle,

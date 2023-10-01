@@ -1,5 +1,5 @@
 var dataEquipment = {
-  'data': [
+  'equips': [
     {
       'code': 'FA1-SF1-001',
       'title': 'ถังดับเพลิง 01',
@@ -37,7 +37,7 @@ var dataEquipment = {
 };
 
 var dataDetail = {
-  'data': [
+  'equiplogs': [
     {
       'code': 'FA1-SF1-001',
       'status': 'NORMAL',

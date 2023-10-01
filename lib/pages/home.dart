@@ -1,9 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
-
 import 'package:equipment_check_sheet/component/home/drawer.dart';
 import 'package:equipment_check_sheet/models/md_account.dart';
 import 'package:equipment_check_sheet/models/md_data.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
@@ -26,26 +25,94 @@ class _HomePageState extends State<HomePage> {
   Color? colrScan = Colors.red[100];
   Color? colrTxtRmk = Colors.red[100];
   final frmKey = GlobalKey<FormState>();
+  Future<List<MEquipInfo>>? oEquips;
+  MEquipInfo? oEquip = MEquipInfo(
+      code: '',
+      title: '',
+      subTitle: '',
+      area: '',
+      line: '',
+      status: '',
+      nextCheck: '',
+      lastBy: '',
+      lastCheck: '');
 
-  void loadData() async {
+  Future loadData(String qrCode) async {
+    //********* METHOD 1  ************
+    //var data = dataEquipment['equips'] as List<dynamic>;
 
-   dataEquipment.cast().forEach((key, value) {
-    // value.forEach((keyy, val){
-    //   debugPrint('key: $keyy | val: $val');
+    //********* METHOD 2  ************
+    var data = dataEquipment['equips'] as List<Map<String, String>>;
+
+    //********* METHOD 3  ************
+    // var data = dataEquipment['equips']!.cast<Map<String, String>>();
+
+    debugPrint(qrCode);
+    //********** DISPLAY WITH OBJECT ***************
+    List<MEquipInfo> oDatas =
+        data.map<MEquipInfo>((elm) => MEquipInfo.fromJson(elm)).toList();
+    oDatas = oDatas.where((eq) => eq.code == qrCode).toList();
+    if (oDatas.isNotEmpty) {
+      setState(() {
+        oEquip = MEquipInfo(
+            code: oDatas[0].code,
+            title: oDatas[0].title,
+            subTitle: oDatas[0].subTitle,
+            area: oDatas[0].area,
+            line: oDatas[0].line,
+            status: oDatas[0].status,
+            nextCheck: oDatas[0].nextCheck,
+            lastBy: oDatas[0].lastBy,
+            lastCheck: oDatas[0].lastCheck);
+      });
+    } else {
+      if (context.mounted) {
+        setState(() {
+          oEquip = MEquipInfo(
+              code: '',
+              title: '',
+              subTitle: '',
+              area: '',
+              line: '',
+              status: '',
+              nextCheck: '',
+              lastBy: '',
+              lastCheck: '');
+        });
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('no data'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(30),
+        ));
+      }
+    }
+
+    //Future<List<MEquipInfo>> dataxxx = compute(parseDataList, data);
+
+    // dataxxx.then((value) {
+    //   debugPrint('>>>>>>>>>  ${value.length} <<<<<<<<<<');
+    // },);
+
+    // for (MEquipInfo oData in oDatas) {
+    //     debugPrint('code: ${oData.code} | area: ${oData.area}');
+    // }
+
+    //********** DISPLAY WITH JSON ***************
+    // data.forEach(<MEquipInfo>(element) {
+    //   debugPrint('code: ${element['code']} | area: ${element['area']}');
     // });
-
-    debugPrint('key: $key | val: $value');
-    
-   });
-    
   }
 
-  List<MEquipInfo> parseOTList(String responseBody) {
-    final parsed = jsonDecode(responseBody).cast<Map<String, dynamic>>();
-    return parsed.map<MEquipInfo>((json) => MEquipInfo.fromJson(json)).toList();
-  }
+  // List<MEquipInfo> parseDataList(List<Map<String, String>> oObjs) {
+  //   debugPrint('code: ${oObjs[0]['code']} | area: ${oObjs[0]['area']}');
+  //   return oObjs.map<MEquipInfo>((elm) => MEquipInfo.fromJson(elm)).toList();
+  // }
 
-
+  // List<MEquipInfo> parseDataList(dynamic responseBody) {
+  //   //final parsed = responseBody.cast<Map<String, dynamic>>();
+  //   return responseBody.map<MEquipInfo>((json) => MEquipInfo.fromJson(json)).toList();
+  // }
 
   @override
   void initState() {
@@ -60,14 +127,11 @@ class _HomePageState extends State<HomePage> {
             isInit = true;
           });
           focScanNode = FocusNode();
-          // focScanNode!.requestFocus();
           focScanNode!.addListener(_onFocusChange);
 
           focTxtRmkNode = FocusNode();
           focTxtRmkNode!.addListener(_onFocusChange);
         }
-
-        loadData();
       },
     );
   }
@@ -171,6 +235,8 @@ class _HomePageState extends State<HomePage> {
                                 )),
                             onFieldSubmitted: (scn) {
                               scnCtrl.text = scn;
+
+                              loadData('FA1-SF1-002');
                             },
                           ))),
                 ],
@@ -185,7 +251,7 @@ class _HomePageState extends State<HomePage> {
                     style: fntThin,
                   ),
                   Text(
-                    'FA1-001-0001',
+                    oEquip!.code,
                     style: fntBold,
                   ),
                 ],
@@ -200,7 +266,7 @@ class _HomePageState extends State<HomePage> {
                       style: fntThin,
                     ),
                     Text(
-                      'Factory 1 - Line Main Assembly',
+                      '${oEquip!.area} ${oEquip!.line}',
                       style: fntBold,
                     ),
                   ],
@@ -215,7 +281,7 @@ class _HomePageState extends State<HomePage> {
                     style: fntThin,
                   ),
                   Text(
-                    'ปกติ',
+                    ' ${oEquip!.status} ',
                     style: fntBold,
                   ),
                 ],
@@ -242,7 +308,7 @@ class _HomePageState extends State<HomePage> {
                           decoration: InputDecoration(
                             contentPadding: EdgeInsets.all(0),
                             label: Text('หมายเหตุ'),
-                            hintText: 'หมายเหตุ',                            
+                            hintText: 'หมายเหตุ',
                             fillColor: colrTxtRmk,
                             filled: true,
                             border: OutlineInputBorder(
@@ -266,21 +332,31 @@ class _HomePageState extends State<HomePage> {
                               onPressed: () {},
                               style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.greenAccent[400]),
-                              icon: const Icon(FontAwesomeIcons.squareCheck, color: Colors.white,),
-                              label: Text('ปกติ', style: TextStyle(color: Colors.white),)),
+                              icon: const Icon(
+                                FontAwesomeIcons.squareCheck,
+                                color: Colors.white,
+                              ),
+                              label: Text(
+                                'ปกติ',
+                                style: TextStyle(color: Colors.white),
+                              )),
                           ElevatedButton.icon(
                               onPressed: () {},
                               style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.redAccent[400]),
-                              icon: const Icon(FontAwesomeIcons.squareXmark, color: Colors.white,),
-                              label: Text('ผิดปกติ', style: TextStyle(color: Colors.white))),
+                              icon: const Icon(
+                                FontAwesomeIcons.squareXmark,
+                                color: Colors.white,
+                              ),
+                              label: Text('ผิดปกติ',
+                                  style: TextStyle(color: Colors.white))),
                         ],
                       ),
                     ],
                   ),
                 ),
               ),
-              Text('${focTxtRmkNode!.hasFocus} : ${focScanNode!.hasFocus}'),
+              // Text('${oEquip!} : ${oEquip!}'),
               Text('${oAccount!.code} : ${oAccount!.shortName}'),
               Text('${oAccount!.code} : ${oAccount!.shortName}'),
             ]),

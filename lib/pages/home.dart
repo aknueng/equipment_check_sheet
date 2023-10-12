@@ -1,13 +1,13 @@
 import 'dart:async';
-import 'package:equipment_check_sheet/component/home/drawer.dart';
+import 'dart:convert';
+import 'package:equipment_check_sheet/component/drawer.dart';
 import 'package:equipment_check_sheet/models/md_account.dart';
-import 'package:equipment_check_sheet/models/md_data.dart';
-import 'package:flutter/foundation.dart';
+import 'package:equipment_check_sheet/models/md_equipment.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:equipment_check_sheet/api/home/source.dart';
+import 'package:http/http.dart' as http;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,65 +20,143 @@ class _HomePageState extends State<HomePage> {
   MAccount? oAccount;
   bool isInit = false;
   TextEditingController scnCtrl = TextEditingController();
+  TextEditingController remarkCtrl = TextEditingController();
   FocusNode? focScanNode;
   FocusNode? focTxtRmkNode;
   Color? colrScan = Colors.red[100];
   Color? colrTxtRmk = Colors.red[100];
   final frmKey = GlobalKey<FormState>();
-  Future<List<MEquipInfo>>? oEquips;
-  MEquipInfo? oEquip = MEquipInfo(
-      code: '',
-      title: '',
-      subTitle: '',
-      area: '',
-      line: '',
-      status: '',
-      nextCheck: '',
-      lastBy: '',
-      lastCheck: '');
+  String? EquipCode;
+  MEquipmentInfo oEquip = MEquipmentInfo(
+      eqpPriority: '',
+      eqpId: '',
+      layoutCode: '',
+      objId: '',
+      eqpTitle: '',
+      eqpSubTitle: '',
+      eqpX: '',
+      eqpW: '',
+      eqpY: '',
+      eqpH: '',
+      eqpStatus: '',
+      layout: '',
+      factory: '',
+      eqpNextCheckDt: '',
+      eqpLastCheckDt: '',
+      eqpLastCheckBy: '',
+      eqpRemark: '',
+      eqpStartCheckDt: '',
+      objMstNextDay: '',
+      objMstNextMonth: '',
+      objMstNextYear: '',
+      eqpTrigger: '',
+      eqpScale: '');
+  // Future<List<MEquipInfo>>? oEquips;
+  // MEquipInfo? oEquip = MEquipInfo(
+  //     code: '',
+  //     title: '',
+  //     subTitle: '',
+  //     area: '',
+  //     line: '',
+  //     status: '',
+  //     nextCheck: '',
+  //     lastBy: '',
+  //     lastCheck: '');
 
-  Future loadData(String qrCode) async {
-    //********* METHOD 1  ************
-    //var data = dataEquipment['equips'] as List<dynamic>;
+  // Future loadData(String qrCode) async {
+  //   //********* METHOD 1  ************
+  //   //var data = dataEquipment['equips'] as List<dynamic>;
 
-    //********* METHOD 2  ************
-    var data = dataEquipment['equips'] as List<Map<String, String>>;
+  //   //********* METHOD 2  ************
+  //   var data = dataEquipment['equips'] as List<Map<String, String>>;
 
-    //********* METHOD 3  ************
-    // var data = dataEquipment['equips']!.cast<Map<String, String>>();
+  //   //********* METHOD 3  ************
+  //   // var data = dataEquipment['equips']!.cast<Map<String, String>>();
 
-    debugPrint(qrCode);
-    //********** DISPLAY WITH OBJECT ***************
-    List<MEquipInfo> oDatas =
-        data.map<MEquipInfo>((elm) => MEquipInfo.fromJson(elm)).toList();
-    oDatas = oDatas.where((eq) => eq.code == qrCode).toList();
-    if (oDatas.isNotEmpty) {
+  //   debugPrint(qrCode);
+  //   //********** DISPLAY WITH OBJECT ***************
+  //   List<MEquipInfo> oDatas =
+  //       data.map<MEquipInfo>((elm) => MEquipInfo.fromJson(elm)).toList();
+  //   oDatas = oDatas.where((eq) => eq.code == qrCode).toList();
+  //   if (oDatas.isNotEmpty) {
+  //     setState(() {
+  //       oEquip = MEquipInfo(
+  //           code: oDatas[0].code,
+  //           title: oDatas[0].title,
+  //           subTitle: oDatas[0].subTitle,
+  //           area: oDatas[0].area,
+  //           line: oDatas[0].line,
+  //           status: oDatas[0].status,
+  //           nextCheck: oDatas[0].nextCheck,
+  //           lastBy: oDatas[0].lastBy,
+  //           lastCheck: oDatas[0].lastCheck);
+  //     });
+  //   } else {
+  //     if (context.mounted) {
+  //       setState(() {
+  //         oEquip = MEquipInfo(
+  //             code: '',
+  //             title: '',
+  //             subTitle: '',
+  //             area: '',
+  //             line: '',
+  //             status: '',
+  //             nextCheck: '',
+  //             lastBy: '',
+  //             lastCheck: '');
+  //       });
+  //       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+  //         content: Text('no data'),
+  //         backgroundColor: Colors.red,
+  //         behavior: SnackBarBehavior.floating,
+  //         margin: EdgeInsets.all(30),
+  //       ));
+  //     }
+  //   }
+  // }
+
+  Future scanLoadData(String qrCode) async {
+    final response = await http.get(
+      Uri.parse(
+          'https://scm.dci.co.th/SafetyFireExtinguisherAPI/equipment/get/id/$qrCode'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
+
+    if (response.statusCode.toString().startsWith("2")) {
       setState(() {
-        oEquip = MEquipInfo(
-            code: oDatas[0].code,
-            title: oDatas[0].title,
-            subTitle: oDatas[0].subTitle,
-            area: oDatas[0].area,
-            line: oDatas[0].line,
-            status: oDatas[0].status,
-            nextCheck: oDatas[0].nextCheck,
-            lastBy: oDatas[0].lastBy,
-            lastCheck: oDatas[0].lastCheck);
+        oEquip = MEquipmentInfo.fromJson(jsonDecode(response.body));
+      });
+    } else if (response.statusCode.toString().startsWith("4")) {
+      setState(() {
+        oEquip = MEquipmentInfo(
+            eqpPriority: '',
+            eqpId: '',
+            layoutCode: '',
+            objId: '',
+            eqpTitle: '',
+            eqpSubTitle: '',
+            eqpX: '',
+            eqpW: '',
+            eqpY: '',
+            eqpH: '',
+            eqpStatus: '',
+            layout: '',
+            factory: '',
+            eqpNextCheckDt: '',
+            eqpLastCheckDt: '',
+            eqpLastCheckBy: '',
+            eqpRemark: '',
+            eqpStartCheckDt: '',
+            objMstNextDay: '',
+            objMstNextMonth: '',
+            objMstNextYear: '',
+            eqpTrigger: '',
+            eqpScale: '');
       });
     } else {
       if (context.mounted) {
-        setState(() {
-          oEquip = MEquipInfo(
-              code: '',
-              title: '',
-              subTitle: '',
-              area: '',
-              line: '',
-              status: '',
-              nextCheck: '',
-              lastBy: '',
-              lastCheck: '');
-        });
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('no data'),
           backgroundColor: Colors.red,
@@ -86,33 +164,47 @@ class _HomePageState extends State<HomePage> {
           margin: EdgeInsets.all(30),
         ));
       }
+      throw Exception('no data');
     }
-
-    //Future<List<MEquipInfo>> dataxxx = compute(parseDataList, data);
-
-    // dataxxx.then((value) {
-    //   debugPrint('>>>>>>>>>  ${value.length} <<<<<<<<<<');
-    // },);
-
-    // for (MEquipInfo oData in oDatas) {
-    //     debugPrint('code: ${oData.code} | area: ${oData.area}');
-    // }
-
-    //********** DISPLAY WITH JSON ***************
-    // data.forEach(<MEquipInfo>(element) {
-    //   debugPrint('code: ${element['code']} | area: ${element['area']}');
-    // });
   }
 
-  // List<MEquipInfo> parseDataList(List<Map<String, String>> oObjs) {
-  //   debugPrint('code: ${oObjs[0]['code']} | area: ${oObjs[0]['area']}');
-  //   return oObjs.map<MEquipInfo>((elm) => MEquipInfo.fromJson(elm)).toList();
-  // }
+  Future updateStatus(
+      String paramQrCode, String paramRemark, String paramStatus) async {
+    final response = await http.post(
+        Uri.parse(
+            'https://scm.dci.co.th/SafetyFireExtinguisherAPI/equipment/check'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'EqpId': paramQrCode,
+          'EqpRemark': paramRemark,
+          'EqpStatus': paramStatus
+        }));
 
-  // List<MEquipInfo> parseDataList(dynamic responseBody) {
-  //   //final parsed = responseBody.cast<Map<String, dynamic>>();
-  //   return responseBody.map<MEquipInfo>((json) => MEquipInfo.fromJson(json)).toList();
-  // }
+    if (response.statusCode.toString().startsWith("2")) {
+      scanLoadData(paramQrCode);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('บันทึกเรียบร้อยแล้ว'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(30),
+        ));
+      }
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('no data'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(30),
+        ));
+      }
+      throw Exception('no data');
+    }
+  }
 
   @override
   void initState() {
@@ -146,9 +238,9 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Color focusColor(bool foc) {
-    return (foc) ? Colors.yellow[100]! : Colors.red;
-  }
+  // Color focusColor(bool foc) {
+  //   return (foc) ? Colors.yellow[100]! : Colors.red;
+  // }
 
   @override
   void dispose() {
@@ -220,8 +312,27 @@ class _HomePageState extends State<HomePage> {
                                 label: const Text('Scan QRCode'),
                                 hintText: 'Scan QRCode',
                                 counterText: '',
-                                icon: const Icon(FontAwesomeIcons.qrcode),
-                                suffixIcon: const Icon(FontAwesomeIcons.qrcode),
+                                icon: CircleAvatar(
+                                  backgroundColor:
+                                      theme.colorScheme.inversePrimary,
+                                  child: IconButton(
+                                      onPressed: () async {
+                                        final qrcode =
+                                            await Get.toNamed('/qrcode');
+                                        setState(() {
+                                          scnCtrl.text = qrcode;
+                                          EquipCode = qrcode;
+                                          scanLoadData(qrcode);
+
+                                          scnCtrl.text = '';
+                                        });
+                                      },
+                                      icon: const Icon(
+                                        FontAwesomeIcons.qrcode,
+                                        color: Colors.white,
+                                      )),
+                                ),
+                                // suffixIcon: const Icon(FontAwesomeIcons.qrcode),
                                 fillColor: colrScan,
                                 filled: true,
                                 border: OutlineInputBorder(
@@ -233,11 +344,13 @@ class _HomePageState extends State<HomePage> {
                                       color: Colors.yellow, width: 5),
                                   borderRadius: BorderRadius.circular(10),
                                 )),
-                            onFieldSubmitted: (scn) {
-                              scnCtrl.text = scn;
+                            // onFieldSubmitted: (scn) {
+                            //   scnCtrl.text = scn;
 
-                              loadData('FA1-SF1-002');
-                            },
+                            //   scanLoadData(scn);
+
+                            //   scnCtrl.text = '';
+                            // },
                           ))),
                 ],
               ),
@@ -247,11 +360,11 @@ class _HomePageState extends State<HomePage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Code : ',
+                    'เลขที่ : ',
                     style: fntThin,
                   ),
                   Text(
-                    oEquip!.code,
+                    '${oEquip.eqpId} (${oEquip.factory})',
                     style: fntBold,
                   ),
                 ],
@@ -262,11 +375,11 @@ class _HomePageState extends State<HomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Area : ',
+                      'วันที่ตรวจสอบ : ',
                       style: fntThin,
                     ),
                     Text(
-                      '${oEquip!.area} ${oEquip!.line}',
+                      '${oEquip.eqpNextCheckDt} ',
                       style: fntBold,
                     ),
                   ],
@@ -277,11 +390,39 @@ class _HomePageState extends State<HomePage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Statue : ',
+                    'ตรวจสอบล่าสุด : ',
                     style: fntThin,
                   ),
                   Text(
-                    ' ${oEquip!.status} ',
+                    ' ${oEquip.eqpLastCheckDt} ',
+                    style: fntBold,
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'โดย : ',
+                    style: fntThin,
+                  ),
+                  Text(
+                    ' ${oEquip.eqpLastCheckBy} ',
+                    style: fntBold,
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'สถานะ : ',
+                    style: fntThin,
+                  ),
+                  Text(
+                    ' ${oEquip!.eqpStatus} ',
                     style: fntBold,
                   ),
                 ],
@@ -302,12 +443,13 @@ class _HomePageState extends State<HomePage> {
                         height: 15,
                       ),
                       Container(
-                        padding: EdgeInsets.fromLTRB(75, 0, 75, 0),
+                        padding: const EdgeInsets.fromLTRB(75, 0, 75, 0),
                         child: TextFormField(
                           focusNode: focTxtRmkNode,
+                          controller: remarkCtrl,
                           decoration: InputDecoration(
-                            contentPadding: EdgeInsets.all(0),
-                            label: Text('หมายเหตุ'),
+                            contentPadding: const EdgeInsets.all(0),
+                            label: const Text('หมายเหตุ'),
                             hintText: 'หมายเหตุ',
                             fillColor: colrTxtRmk,
                             filled: true,
@@ -316,7 +458,7 @@ class _HomePageState extends State<HomePage> {
                                     width: 3,
                                     style: BorderStyle.solid,
                                     color: theme.colorScheme.primary)),
-                            focusedBorder: OutlineInputBorder(
+                            focusedBorder: const OutlineInputBorder(
                               borderSide: BorderSide(
                                   width: 3,
                                   style: BorderStyle.solid,
@@ -329,26 +471,30 @@ class _HomePageState extends State<HomePage> {
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           ElevatedButton.icon(
-                              onPressed: () {},
+                              onPressed: () {
+                                updateStatus(EquipCode!, "", "true");
+                              },
                               style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.greenAccent[400]),
                               icon: const Icon(
                                 FontAwesomeIcons.squareCheck,
                                 color: Colors.white,
                               ),
-                              label: Text(
+                              label: const Text(
                                 'ปกติ',
                                 style: TextStyle(color: Colors.white),
                               )),
                           ElevatedButton.icon(
-                              onPressed: () {},
+                              onPressed: () {
+                                updateStatus(EquipCode!, "", "false");
+                              },
                               style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.redAccent[400]),
                               icon: const Icon(
                                 FontAwesomeIcons.squareXmark,
                                 color: Colors.white,
                               ),
-                              label: Text('ผิดปกติ',
+                              label: const Text('ผิดปกติ',
                                   style: TextStyle(color: Colors.white))),
                         ],
                       ),
@@ -357,8 +503,8 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               // Text('${oEquip!} : ${oEquip!}'),
-              Text('${oAccount!.code} : ${oAccount!.shortName}'),
-              Text('${oAccount!.code} : ${oAccount!.shortName}'),
+              // Text('${oAccount!.code} : ${oAccount!.shortName}'),
+              // Text('${oAccount!.code} : ${oAccount!.shortName}'),
             ]),
       ),
       drawer: (isInit) ? wdDrawer(theme, oAccount!) : null,

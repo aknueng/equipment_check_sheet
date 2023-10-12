@@ -45,6 +45,7 @@ dependencies:
   intl: ^0.18.1
   get: ^4.6.6
   never_behind_keyboard: ^1.0.2
+  qr_code_scanner: ^1.0.1
 
 dev_dependencies:
   flutter_test:

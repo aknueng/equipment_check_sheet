@@ -1,3 +1,4 @@
+import 'package:equipment_check_sheet/component/scanqrcode.dart';
 import 'package:equipment_check_sheet/pages/home.dart';
 import 'package:equipment_check_sheet/pages/login.dart';
 import 'package:flutter/material.dart';
@@ -13,8 +14,8 @@ void main() async {
 String initPage = '/home';
 Future checkAccount() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
-  String chkLogin = prefs.getString('code') ?? '';  
-  if (chkLogin == '' || chkLogin.isEmpty) {    
+  String chkLogin = prefs.getString('code') ?? '';
+  if (chkLogin == '' || chkLogin.isEmpty) {
     initPage = '/login';
   }
 }
@@ -25,7 +26,6 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-
     return GetMaterialApp(
       title: 'Equipment Check Sheet',
       debugShowCheckedModeBanner: false,
@@ -38,6 +38,10 @@ class MyApp extends StatelessWidget {
         GetPage(
             name: '/home',
             page: () => const HomePage(),
+            transition: Transition.cupertino),
+        GetPage(
+            name: '/qrcode',
+            page: () => const QrcodeScanner(),
             transition: Transition.cupertino)
       ],
       theme: ThemeData(

@@ -4,6 +4,7 @@ import 'package:equipment_check_sheet/component/drawer.dart';
 import 'package:equipment_check_sheet/models/md_account.dart';
 import 'package:equipment_check_sheet/models/md_equipment.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -26,31 +27,21 @@ class _HomePageState extends State<HomePage> {
   Color? colrScan = Colors.red[100];
   Color? colrTxtRmk = Colors.red[100];
   final frmKey = GlobalKey<FormState>();
-  String? EquipCode;
+  String? equipCode;
   MEquipmentInfo oEquip = MEquipmentInfo(
-      eqpPriority: '',
       eqpId: '',
       layoutCode: '',
       objId: '',
       eqpTitle: '',
       eqpSubTitle: '',
-      eqpX: '',
-      eqpW: '',
-      eqpY: '',
-      eqpH: '',
+      eqpLastCheckDt: '',
+      eqpNextCheckDt: '',
+      eqpLastCheckBy: '',
       eqpStatus: '',
       layout: '',
       factory: '',
-      eqpNextCheckDt: '',
-      eqpLastCheckDt: '',
-      eqpLastCheckBy: '',
-      eqpRemark: '',
-      eqpStartCheckDt: '',
-      objMstNextDay: '',
-      objMstNextMonth: '',
-      objMstNextYear: '',
-      eqpTrigger: '',
-      eqpScale: '');
+      shortname: '',
+      objSvg: '');
   // Future<List<MEquipInfo>>? oEquips;
   // MEquipInfo? oEquip = MEquipInfo(
   //     code: '',
@@ -125,35 +116,25 @@ class _HomePageState extends State<HomePage> {
     );
 
     if (response.statusCode.toString().startsWith("2")) {
-      setState(() {
+      setState(() async {
         oEquip = MEquipmentInfo.fromJson(jsonDecode(response.body));
       });
     } else if (response.statusCode.toString().startsWith("4")) {
       setState(() {
         oEquip = MEquipmentInfo(
-            eqpPriority: '',
             eqpId: '',
             layoutCode: '',
             objId: '',
             eqpTitle: '',
             eqpSubTitle: '',
-            eqpX: '',
-            eqpW: '',
-            eqpY: '',
-            eqpH: '',
+            eqpLastCheckDt: '',
+            eqpNextCheckDt: '',
+            eqpLastCheckBy: '',
             eqpStatus: '',
             layout: '',
             factory: '',
-            eqpNextCheckDt: '',
-            eqpLastCheckDt: '',
-            eqpLastCheckBy: '',
-            eqpRemark: '',
-            eqpStartCheckDt: '',
-            objMstNextDay: '',
-            objMstNextMonth: '',
-            objMstNextYear: '',
-            eqpTrigger: '',
-            eqpScale: '');
+            shortname: '',
+            objSvg: '');
       });
     } else {
       if (context.mounted) {
@@ -179,7 +160,8 @@ class _HomePageState extends State<HomePage> {
         body: jsonEncode(<String, String>{
           'EqpId': paramQrCode,
           'EqpRemark': paramRemark,
-          'EqpStatus': paramStatus
+          'EqpStatus': paramStatus,
+          'EqpCheckBy': oAccount!.code
         }));
 
     if (response.statusCode.toString().startsWith("2")) {
@@ -283,6 +265,9 @@ class _HomePageState extends State<HomePage> {
         fontWeight: FontWeight.bold,
         color: theme.colorScheme.primary);
 
+    String picSVG =
+        (oEquip.objSvg.isNotEmpty) ? oEquip.objSvg.replaceAll("\"", '"') : "";
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('CHECK SHEET'),
@@ -292,220 +277,228 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Container(
         padding: const EdgeInsets.all(10.0),
-        child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                      child: Container(
-                          padding: const EdgeInsets.fromLTRB(75, 0, 75, 0),
-                          alignment: Alignment.center,
-                          // color: theme.colorScheme.surfaceVariant,
-                          child: TextFormField(
-                            maxLength: 20,
-                            autofocus: true,
-                            focusNode: focScanNode,
-                            controller: scnCtrl,
-                            decoration: InputDecoration(
-                                label: const Text('Scan QRCode'),
-                                hintText: 'Scan QRCode',
-                                counterText: '',
-                                icon: CircleAvatar(
-                                  backgroundColor:
-                                      theme.colorScheme.inversePrimary,
-                                  child: IconButton(
-                                      onPressed: () async {
-                                        final qrcode =
-                                            await Get.toNamed('/qrcode');
-                                        setState(() {
-                                          scnCtrl.text = qrcode;
-                                          EquipCode = qrcode;
-                                          scanLoadData(qrcode);
+        child: SingleChildScrollView(
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                        child: Container(
+                            padding: const EdgeInsets.fromLTRB(75, 0, 75, 0),
+                            alignment: Alignment.center,
+                            // color: theme.colorScheme.surfaceVariant,
+                            child: TextFormField(
+                              maxLength: 20,
+                              autofocus: true,
+                              focusNode: focScanNode,
+                              controller: scnCtrl,
+                              decoration: InputDecoration(
+                                  label: const Text('Scan QRCode'),
+                                  hintText: 'Scan QRCode',
+                                  counterText: '',
+                                  icon: CircleAvatar(
+                                    backgroundColor:
+                                        theme.colorScheme.inversePrimary,
+                                    child: IconButton(
+                                        onPressed: () async {
+                                          final qrcode =
+                                              await Get.toNamed('/qrcode');
+                                          setState(() {
+                                            scnCtrl.text = qrcode;
+                                            equipCode = qrcode;
+                                            scanLoadData(qrcode);
 
-                                          scnCtrl.text = '';
-                                        });
-                                      },
-                                      icon: const Icon(
-                                        FontAwesomeIcons.qrcode,
-                                        color: Colors.white,
-                                      )),
-                                ),
-                                // suffixIcon: const Icon(FontAwesomeIcons.qrcode),
-                                fillColor: colrScan,
-                                filled: true,
-                                border: OutlineInputBorder(
+                                            scnCtrl.text = '';
+                                          });
+                                        },
+                                        icon: const Icon(
+                                          FontAwesomeIcons.qrcode,
+                                          color: Colors.white,
+                                        )),
+                                  ),
+                                  // suffixIcon: const Icon(FontAwesomeIcons.qrcode),
+                                  fillColor: colrScan,
+                                  filled: true,
+                                  border: OutlineInputBorder(
+                                      borderSide: const BorderSide(
+                                          color: Colors.redAccent, width: 5),
+                                      borderRadius: BorderRadius.circular(10)),
+                                  focusedBorder: OutlineInputBorder(
                                     borderSide: const BorderSide(
-                                        color: Colors.redAccent, width: 5),
-                                    borderRadius: BorderRadius.circular(10)),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: const BorderSide(
-                                      color: Colors.yellow, width: 5),
-                                  borderRadius: BorderRadius.circular(10),
-                                )),
-                            // onFieldSubmitted: (scn) {
-                            //   scnCtrl.text = scn;
+                                        color: Colors.yellow, width: 5),
+                                    borderRadius: BorderRadius.circular(10),
+                                  )),
+                              // onFieldSubmitted: (scn) {
+                              //   scnCtrl.text = scn;
 
-                            //   scanLoadData(scn);
+                              //   scanLoadData(scn);
 
-                            //   scnCtrl.text = '';
-                            // },
-                          ))),
-                ],
-              ),
-              Divider(color: Colors.yellow[900], thickness: 5),
-              Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'เลขที่ : ',
-                    style: fntThin,
-                  ),
-                  Text(
-                    '${oEquip.eqpId} (${oEquip.factory})',
-                    style: fntBold,
-                  ),
-                ],
-              ),
-              Wrap(children: [
+                              //   scnCtrl.text = '';
+                              // },
+                            ))),
+                  ],
+                ),
+                Divider(color: Colors.yellow[900], thickness: 5),
                 Row(
                   mainAxisSize: MainAxisSize.max,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'วันที่ตรวจสอบ : ',
+                      'เลขที่ : ',
                       style: fntThin,
                     ),
                     Text(
-                      '${oEquip.eqpNextCheckDt} ',
+                      '${oEquip.eqpId} (${oEquip.factory})',
                       style: fntBold,
                     ),
                   ],
                 ),
-              ]),
-              Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'ตรวจสอบล่าสุด : ',
-                    style: fntThin,
-                  ),
-                  Text(
-                    ' ${oEquip.eqpLastCheckDt} ',
-                    style: fntBold,
-                  ),
-                ],
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'โดย : ',
-                    style: fntThin,
-                  ),
-                  Text(
-                    ' ${oEquip.eqpLastCheckBy} ',
-                    style: fntBold,
-                  ),
-                ],
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'สถานะ : ',
-                    style: fntThin,
-                  ),
-                  Text(
-                    ' ${oEquip!.eqpStatus} ',
-                    style: fntBold,
-                  ),
-                ],
-              ),
-              Divider(
-                color: Colors.yellow[900],
-                thickness: 5,
-                height: 5,
-              ),
-              Form(
-                key: frmKey,
-                child: Container(
-                  // margin: EdgeInsets.only(top: 10),
-                  color: theme.highlightColor,
-                  child: Column(
+                Wrap(children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(
-                        height: 15,
+                      Text(
+                        'ตรวจครั้งหน้า : ',
+                        style: fntThin,
                       ),
-                      Container(
-                        padding: const EdgeInsets.fromLTRB(75, 0, 75, 0),
-                        child: TextFormField(
-                          focusNode: focTxtRmkNode,
-                          controller: remarkCtrl,
-                          decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.all(0),
-                            label: const Text('หมายเหตุ'),
-                            hintText: 'หมายเหตุ',
-                            fillColor: colrTxtRmk,
-                            filled: true,
-                            border: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                    width: 3,
-                                    style: BorderStyle.solid,
-                                    color: theme.colorScheme.primary)),
-                            focusedBorder: const OutlineInputBorder(
-                              borderSide: BorderSide(
-                                  width: 3,
-                                  style: BorderStyle.solid,
-                                  color: Colors.yellow),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          ElevatedButton.icon(
-                              onPressed: () {
-                                updateStatus(EquipCode!, "", "true");
-                              },
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.greenAccent[400]),
-                              icon: const Icon(
-                                FontAwesomeIcons.squareCheck,
-                                color: Colors.white,
-                              ),
-                              label: const Text(
-                                'ปกติ',
-                                style: TextStyle(color: Colors.white),
-                              )),
-                          ElevatedButton.icon(
-                              onPressed: () {
-                                updateStatus(EquipCode!, "", "false");
-                              },
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.redAccent[400]),
-                              icon: const Icon(
-                                FontAwesomeIcons.squareXmark,
-                                color: Colors.white,
-                              ),
-                              label: const Text('ผิดปกติ',
-                                  style: TextStyle(color: Colors.white))),
-                        ],
+                      Text(
+                        '${oEquip.eqpNextCheckDt} ',
+                        style: fntBold,
                       ),
                     ],
                   ),
+                ]),
+                Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'ตรวจครั้งก่อน : ',
+                      style: fntThin,
+                    ),
+                    Text(
+                      ' ${oEquip.eqpLastCheckDt} ',
+                      style: fntBold,
+                    ),
+                  ],
                 ),
-              ),
-              // Text('${oEquip!} : ${oEquip!}'),
-              // Text('${oAccount!.code} : ${oAccount!.shortName}'),
-              // Text('${oAccount!.code} : ${oAccount!.shortName}'),
-            ]),
+                Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'ตรวจโดย : ',
+                      style: fntThin,
+                    ),
+                    Text(
+                      ' ${oEquip.shortname} ',
+                      style: fntBold,
+                    ),
+                  ],
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'สถานะ : ',
+                      style: fntThin,
+                    ),
+                    Text(
+                      ' ${oEquip!.eqpStatus} ',
+                      style: fntBold,
+                    ),
+                  ],
+                ),
+                (oEquip.objSvg.isNotEmpty)
+                    ? SvgPicture.string(oEquip.objSvg
+                        .replaceAll("{name}", oEquip.eqpTitle)
+                        .replaceAll("{color}", "green"))
+                    : const Text(''),
+                Divider(
+                  color: Colors.yellow[900],
+                  thickness: 5,
+                  height: 5,
+                ),
+                // (oEquip.objSvg.isNotEmpty) ? Text(picSVG) : const Text(''),
+                Form(
+                  key: frmKey,
+                  child: Container(
+                    // margin: EdgeInsets.only(top: 10),
+                    color: theme.highlightColor,
+                    child: Column(
+                      children: [
+                        const SizedBox(
+                          height: 15,
+                        ),
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(75, 0, 75, 0),
+                          child: TextFormField(
+                            focusNode: focTxtRmkNode,
+                            controller: remarkCtrl,
+                            decoration: InputDecoration(
+                              contentPadding: const EdgeInsets.all(0),
+                              label: const Text('หมายเหตุ'),
+                              hintText: 'หมายเหตุ',
+                              fillColor: colrTxtRmk,
+                              filled: true,
+                              border: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      width: 3,
+                                      style: BorderStyle.solid,
+                                      color: theme.colorScheme.primary)),
+                              focusedBorder: const OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    width: 3,
+                                    style: BorderStyle.solid,
+                                    color: Colors.yellow),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            ElevatedButton.icon(
+                                onPressed: () {
+                                  updateStatus(equipCode!, "", "true");
+                                },
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.greenAccent[400]),
+                                icon: const Icon(
+                                  FontAwesomeIcons.squareCheck,
+                                  color: Colors.white,
+                                ),
+                                label: const Text(
+                                  'ปกติ',
+                                  style: TextStyle(color: Colors.white),
+                                )),
+                            ElevatedButton.icon(
+                                onPressed: () {
+                                  updateStatus(equipCode!, "", "false");
+                                },
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.redAccent[400]),
+                                icon: const Icon(
+                                  FontAwesomeIcons.squareXmark,
+                                  color: Colors.white,
+                                ),
+                                label: const Text('ผิดปกติ',
+                                    style: TextStyle(color: Colors.white))),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Text('${oEquip!} : ${oEquip!}'),
+                // Text('${oAccount!.code} : ${oAccount!.shortName}'),
+                // Text('${oAccount!.code} : ${oAccount!.shortName}'),
+              ]),
+        ),
       ),
       drawer: (isInit) ? wdDrawer(theme, oAccount!) : null,
     );
